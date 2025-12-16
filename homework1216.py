@@ -45,28 +45,29 @@ class CalculatorApp(ft.Container):
         self.reset()
 
         self.result = ft.Text(value="0", color=ft.Colors.WHITE, size=20)
-        self.width = 500
+        # ボタン数が減ったため、幅を標準電卓より少し広いくらいに戻す
+        self.width = 450 
         self.bgcolor = ft.Colors.BLACK
         self.border_radius = ft.border_radius.all(20)
         self.padding = 20
         
+        # 科学計算ボタンのレイアウトを修正
         self.scientific_rows = [
             ft.Row(
                 controls=[
                     ScientificButton(text="sin", button_clicked=self.scientific_button_clicked),
                     ScientificButton(text="cos", button_clicked=self.scientific_button_clicked),
                     ScientificButton(text="tan", button_clicked=self.scientific_button_clicked),
-                    ScientificButton(text="log", button_clicked=self.scientific_button_clicked),
-                    ScientificButton(text="ln", button_clicked=self.scientific_button_clicked),
+                    # 配置調整のためダミーのContainerを追加
+                    ft.Container(expand=1), 
                 ]
             ),
             ft.Row(
                 controls=[
+                    ScientificButton(text="log", button_clicked=self.scientific_button_clicked),
+                    ScientificButton(text="ln", button_clicked=self.scientific_button_clicked),
                     ScientificButton(text="√", button_clicked=self.scientific_button_clicked),
                     ScientificButton(text="1/x", button_clicked=self.scientific_button_clicked),
-                    ft.Container(expand=1), 
-                    ft.Container(expand=1),
-                    ft.Container(expand=1),
                 ]
             ),
         ]
