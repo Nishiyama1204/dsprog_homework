@@ -1,6 +1,7 @@
 import flet as ft
 import math 
 
+
 class CalcButton(ft.ElevatedButton):
     def __init__(self, text, button_clicked, expand=1):
         super().__init__()
@@ -30,11 +31,13 @@ class ExtraActionButton(CalcButton):
         self.bgcolor = ft.Colors.BLUE_GREY_100
         self.color = ft.Colors.BLACK
 
+
 class ScientificButton(CalcButton):
     def __init__(self, text, button_clicked):
         CalcButton.__init__(self, text, button_clicked)
         self.bgcolor = ft.Colors.DEEP_ORANGE_700 
         self.color = ft.Colors.WHITE
+
 
 class CalculatorApp(ft.Container):
     def __init__(self):
@@ -60,10 +63,10 @@ class CalculatorApp(ft.Container):
             ft.Row(
                 controls=[
                     ScientificButton(text="√", button_clicked=self.scientific_button_clicked),
-                    ScientificButton(text="$x^y$", button_clicked=self.button_clicked), 
-                    ScientificButton(text="$x^2$", button_clicked=self.scientific_button_clicked),
-                    ScientificButton(text="$e^x$", button_clicked=self.scientific_button_clicked),
                     ScientificButton(text="1/x", button_clicked=self.scientific_button_clicked),
+                    ft.Container(expand=1), 
+                    ft.Container(expand=1),
+                    ft.Container(expand=1),
                 ]
             ),
         ]
@@ -115,7 +118,6 @@ class CalculatorApp(ft.Container):
         )
 
     def button_clicked(self, e):
-        """標準の数字、小数点、四則演算、AC、=、+/-、%を処理"""
         data = e.control.data
         print(f"Button clicked with data = {data}")
         
@@ -141,11 +143,11 @@ class CalculatorApp(ft.Container):
                 if len(current_value) < 16:
                     self.result.value += data
 
-        elif data in ("+", "-", "×", "÷", "$x^y$"): 
+        elif data in ("+", "-", "×", "÷"): 
             try:
                 self.result.value = self.calculate(self.operand1, float(self.result.value), self.operator)
                 self.operator = data
-
+                
                 if self.result.value == "Error":
                     self.operand1 = 0
                 else:
@@ -178,7 +180,6 @@ class CalculatorApp(ft.Container):
         self.update()
 
     def scientific_button_clicked(self, e):
-        """科学計算モードの単項演算子を処理するハンドラ"""
         data = e.control.data
         print(f"Scientific Button clicked with data = {data}")
 
@@ -221,10 +222,6 @@ class CalculatorApp(ft.Container):
                     self.update()
                     return
                 result = math.sqrt(value)
-            elif data == "$x^2$":
-                result = value ** 2
-            elif data == "$e^x$":
-                result = math.exp(value)
             elif data == "1/x":
                 if value == 0:
                     self.result.value = "Error"
@@ -244,7 +241,6 @@ class CalculatorApp(ft.Container):
         self.update()
 
     def format_number(self, num):
-        """結果を整数または適切な浮動小数点形式にフォーマット"""
         if num is None:
             return "0"
         
@@ -254,7 +250,6 @@ class CalculatorApp(ft.Container):
             return float(f"{num:.10f}")
 
     def calculate(self, operand1, operand2, operator):
-        """2つのオペランドとオペレータに基づいて計算を実行"""
 
         if operator == "+":
             return self.format_number(operand1 + operand2)
@@ -271,13 +266,9 @@ class CalculatorApp(ft.Container):
             else:
                 return self.format_number(operand1 / operand2)
         
-        elif operator == "$x^y$":
-            return self.format_number(operand1 ** operand2)
-
         return self.format_number(operand2)
 
     def reset(self):
-        """電卓の状態を初期化"""
         self.operator = "+"
         self.operand1 = 0
         self.new_operand = True
@@ -287,7 +278,7 @@ def main(page: ft.Page):
     page.title = "Scientific Calculator (Flet)"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.theme_mode = ft.ThemeMode.DARK
+    page.theme_mode = ft.ThemeMode.DARK 
     calc = CalculatorApp()
     page.add(calc)
 
