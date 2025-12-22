@@ -17,20 +17,16 @@ def main(page: ft.Page):
     }
 
     weather_grid = ft.Row(wrap=True, spacing=20, scroll="always", expand=True)
-    weather_container = ft.Container(
-        content=weather_grid,
-        padding=30,
-        expand=True,
-        bgcolor="#e3f2fd"
-    )
 
     def update_weather(area_code, area_name):
         url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{area_code}.json"
         data = requests.get(url).json()
         
-        short_weathers = data[0]["timeSeries"][0]["areas"][0]["weathers"]
+        today_date = data[0]["timeSeries"][0]["timeDefines"][0]
+        today_weather = data[0]["timeSeries"][0]["areas"][0]["weathers"][0]
+        
         weekly_series = data[1]["timeSeries"]
-        dates = weekly_series[0]["timeDefines"]
+        weekly_dates = weekly_series[0]["timeDefines"]
         weather_codes = weekly_series[0]["areas"][0]["weatherCodes"]
         temp_max = weekly_series[1]["areas"][0]["tempsMax"]
         temp_min = weekly_series[1]["areas"][0]["tempsMin"]
@@ -39,23 +35,44 @@ def main(page: ft.Page):
         
         weather_grid.controls.append(
             ft.Container(
-                content=ft.Text(f"{area_name}の週間予報", size=28, weight="bold", color="#1a237e"),
+                content=ft.Text(f"{area_name}の天気予報", size=28, weight="bold", color="#1a237e"),
                 width=2000
             )
         )
-        
-        for i in range(len(dates)):
-            if i < len(short_weathers):
-                weather_text = short_weathers[i]
-                icon_name = "wb_sunny" if "晴" in weather_text else "wb_cloudy"
-                icon_color = "orange" if "晴" in weather_text else "blue"
-            else:
-                code = weather_codes[i]
-                info = TELOP_DICT.get(code, ["曇り", "wb_cloudy", "blue-grey"])
-                weather_text = info[0]
-                icon_name = info[1]
-                icon_color = info[2]
 
+        today_high = "--"
+        today_low = "--"
+        try:
+            for ts in data[0]["timeSeries"]:
+                if "temps" in ts["areas"][0]:
+                    t_list = ts["areas"][0]["temps"]
+                    if len(t_list) >= 2:
+                        today_low, today_high = t_list[0], t_list[1]
+                    break
+        except: pass
+
+        weather_grid.controls.append(
+            ft.Card(
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Text("今日 " + today_date[:10].replace("-", "/"), weight="bold", color="red"),
+                        ft.Icon(name="wb_sunny" if "晴" in today_weather else "wb_cloudy", 
+                                color="orange" if "晴" in today_weather else "blue", size=45),
+                        ft.Text(today_weather, size=12, text_align="center", height=35),
+                        ft.Row([
+                            ft.Text(f"{today_low}°", color="blue", weight="bold"),
+                            ft.Text("/"),
+                            ft.Text(f"{today_high}°", color="red", weight="bold")
+                        ], alignment="center"),
+                    ], horizontal_alignment="center"),
+                    padding=20, width=160, bgcolor="white"
+                )
+            )
+        )
+
+        for i in range(len(weekly_dates)):
+            code = weather_codes[i]
+            info = TELOP_DICT.get(code, ["曇り", "wb_cloudy", "blue-grey"])
             high = temp_max[i] if i < len(temp_max) and temp_max[i] != "" else "--"
             low = temp_min[i] if i < len(temp_min) and temp_min[i] != "" else "--"
 
@@ -63,13 +80,13 @@ def main(page: ft.Page):
                 ft.Card(
                     content=ft.Container(
                         content=ft.Column([
-                            ft.Text(dates[i][:10].replace("-", "/"), weight="bold", size=15),
-                            ft.Icon(name=icon_name, color=icon_color, size=45),
-                            ft.Text(weather_text, size=12, text_align="center", height=35),
+                            ft.Text(weekly_dates[i][:10].replace("-", "/"), weight="bold"),
+                            ft.Icon(name=info[1], color=info[2], size=45),
+                            ft.Text(info[0], size=12, text_align="center", height=35),
                             ft.Row([
-                                ft.Text(f"{low}°", color="blue", weight="bold", size=18),
-                                ft.Text("/", color="grey"),
-                                ft.Text(f"{high}°", color="red", weight="bold", size=18),
+                                ft.Text(f"{low}°", color="blue", weight="bold"),
+                                ft.Text("/"),
+                                ft.Text(f"{high}°", color="red", weight="bold")
                             ], alignment="center"),
                         ], horizontal_alignment="center"),
                         padding=20, width=160, bgcolor="white"
@@ -84,7 +101,6 @@ def main(page: ft.Page):
     for code, info in offices.items():
         region_list_view.controls.append(
             ft.ListTile(
-                leading=ft.Icon("location_on"),
                 title=ft.Text(info["name"]),
                 on_click=lambda e, c=code, n=info["name"]: update_weather(c, n)
             )
@@ -94,8 +110,7 @@ def main(page: ft.Page):
         content=ft.Text("全国天気予報アプリ", color="white", size=22, weight="bold"),
         bgcolor="#1a237e",
         padding=20,
-        alignment=ft.alignment.center_left,
-        width=float("inf"),
+        width=float("inf")
     )
 
     page.add(
@@ -103,7 +118,7 @@ def main(page: ft.Page):
         ft.Row([
             ft.Container(content=region_list_view, width=250, bgcolor="#f5f5f5"),
             ft.VerticalDivider(width=1),
-            weather_container 
+            ft.Container(content=weather_grid, padding=30, expand=True, bgcolor="#e3f2fd")
         ], expand=True)
     )
 
