@@ -2,28 +2,59 @@ import flet as ft
 import requests
 
 def main(page: ft.Page):
-    page.title = "天気予報アプリ（試作）"
-    
-    # 1. 天気を表示するための文字（Text）を用意
-    weather_text = ft.Text(value="ここに結果が出ます", size=20)
+    page.title = "天気予報アプリ"
 
-    # 2. ボタンを押した時の動きを決める
-    def get_weather(e):
-        # 東京のデータを取ってくる
-        url = "https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json"
-        data = requests.get(url).json()
-        
-        # データの深いところにある「天気情報」を取り出す（ここは少し難しいけど決まり文句）
-        forecast = data[0]["timeSeries"][0]["areas"][0]["weathers"][0]
-        
-        # 画面の文字を書き換えて、更新（update）する
-        weather_text.value = f"東京の天気: {forecast}"
+    # --- 部品の設定 ---
+    # 1. 天気を表示するテキスト
+    weather_text = ft.Text(value="地域を選んでください", size=20)
+    
+    # 2. 地域を選ぶメニュー（Dropdown）
+    region_dropdown = ft.Dropdown(
+        label="地域を選択",
+        width=300,
+        options=[] # 最初は空っぽ
+    )
+
+    # --- 動きの設定 ---
+    # ボタンが押された時の処理
+    def display_weather(e):
+        if region_dropdown.value is None:
+            weather_text.value = "地域を選択してください！"
+        else:
+            # 選択された地域の番号を使ってURLを作る
+            code = region_dropdown.value
+            url = f"https://www.jma.go.jp/bosai/forecast/data/forecast/{code}.json"
+            
+            data = requests.get(url).json()
+            forecast = data[0]["timeSeries"][0]["areas"][0]["weathers"][0]
+            
+            weather_text.value = f"選択した地域の天気: {forecast}"
         page.update()
 
-    # 3. 画面に部品（ボタンとテキスト）を置く
+    # --- 最初の準備（地域の名簿を読み込む） ---
+    def load_regions():
+        # スライド1枚目のURL
+        url = "http://www.jma.go.jp/bosai/common/const/area.json"
+        response = requests.get(url).json()
+        
+        # 「offices」という項目の中に地域名と番号が入っています
+        offices = response["offices"]
+        
+        for code, info in offices.items():
+            # メニューに「地域の名前」を追加し、裏側で「番号」を保持する
+            region_dropdown.options.append(
+                ft.dropdown.Option(key=code, text=info["name"])
+            )
+        page.update()
+
+    # --- 画面を作る ---
     page.add(
-        ft.ElevatedButton("東京の天気を取得", on_click=get_weather),
+        region_dropdown,
+        ft.ElevatedButton("天気を表示", on_click=display_weather),
         weather_text
     )
+
+    # アプリ起動時に地域リストを読み込む
+    load_regions()
 
 ft.app(target=main)
